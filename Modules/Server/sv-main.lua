@@ -115,3 +115,18 @@ lib.callback.register("LGF_OutfitBagOx.triggerAllInteractions", function(source)
     end
     return true
 end)
+
+
+local table_exist = MySQL.query.await('SHOW TABLES LIKE ?', { 'lgf_outfitbag' })
+if #table_exist > 0 then return end
+
+MySQL.query([[
+    CREATE TABLE IF NOT EXISTS `lgf_outfitbag` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `outfit_name` varchar(255) DEFAULT NULL,
+        `outfit_data` longtext DEFAULT NULL,
+        `bag_id` int(11) DEFAULT NULL,
+        `outfit_code` text DEFAULT NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+]])
