@@ -1,3 +1,6 @@
+![GitHub Downloads](https://img.shields.io/github/downloads/ENT510/LGF_OutfitBag/total?logo=github)
+![GitHub Release](https://img.shields.io/github/v/release/ENT510/LGF_OutfitBag?logo=github)
+
 # LGF Outfit Bag
 OutfitBag using "LGF_SpriteTextUI" for the interaction, Allow player to share personal outfit.
 
