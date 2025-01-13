@@ -11,6 +11,11 @@ OutfitBag using "LGF_SpriteTextUI" for the interaction, Allow player to share pe
 
 - [ShowCase](https://www.youtube.com/watch?v=d0nCkqfrgCo)
 
+## Requirement
+- ox_inventory
+- LGF_SpriteTextUI
+- oxmysql
+
 ## Features
 - Synced Interaction.
 - Add Outfit by Code: Players can enter a code to copy or generate an outfit.
