@@ -31,7 +31,7 @@ OutfitBag using "LGF_SpriteTextUI" for the interaction, Allow player to share pe
     close = true,
     consume = 0,
     client = {
-        export = 'LGF_DoorSystem.placeBag'
+        export = 'LGF_OutfitBag.placeBag'
     },
 },
 -- Add other Bag 
