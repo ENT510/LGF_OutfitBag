@@ -1,5 +1,6 @@
 local Config = {}
 
+Config.interact = 'LGF_SpriteTextUI' -- 'LGF_SpriteTextUI' or 'ox_target'
 
 -- "fivem-appearance", "illenium-appearance", or "bl-appearance"
 Config.HandlerAppearance = "fivem-appearance"
