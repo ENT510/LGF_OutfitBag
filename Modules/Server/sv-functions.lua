@@ -2,17 +2,10 @@ local Shared = require "Modules.Shared.shared"
 Functions = {}
 
 function Functions.getOutfits(bagID)
-    if not bagID then
-        return {}
-    end
-
+    if not bagID then return {} end
     local query = 'SELECT * FROM lgf_outfitbag WHERE bag_id = ?'
     local result = MySQL.query.await(query, { bagID })
-
-    if not result or #result == 0 then
-        return {}
-    end
-
+    if not result or #result == 0 then return {} end
     local outfits = {}
     for _, row in ipairs(result) do
         outfits[#outfits + 1] = {
@@ -21,18 +14,24 @@ function Functions.getOutfits(bagID)
             outfit_code = row.outfit_code
         }
     end
-
     return outfits
 end
 
 function Functions.deleteOutfitFromId(source, data)
     local query = 'DELETE FROM lgf_outfitbag WHERE outfit_code = ? AND bag_id = ?'
     local result = MySQL.query.await(query, { data.outfit_code, data.bagID })
-
     if result then
-        Shared.notify("Outfit Deleted", "The outfit has been successfully deleted.", "top-right", "success", source)
+        Shared.notify(source, {
+            title = locale('outfit_deleted_title'),
+            description = locale('outfit_deleted_desc'),
+            type = 'success',
+        })
     else
-        Shared.notify("Error", "There was an error deleting the outfit.", "top-right", "error", source)
+        Shared.notify(source, {
+            title = locale('error_title'),
+            description = locale('error_delete_desc'),
+            type = 'error',
+        })
     end
 end
 
@@ -44,6 +43,5 @@ end
 function Functions.codeExists(code)
     local query = 'SELECT COUNT(*) as count FROM lgf_outfitbag WHERE outfit_code = ?'
     local result = MySQL.query.await(query, { code })
-
     return result[1].count > 0
 end
