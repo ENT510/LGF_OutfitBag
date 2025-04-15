@@ -1,6 +1,6 @@
 fx_version 'cerulean'
 game 'gta5'
-version '1.0.2'
+version '1.0.3'
 lua54 'yes'
 author 'ENT510'
 
@@ -20,7 +20,14 @@ server_scripts {
 }
 
 files {
-  'Modules/Client/cl-config.lua',
+  'locales/*.json',
+  'Modules/Shared/client.lua',
   'Modules/Shared/shared.lua',
+  'Modules/Client/bridge.lua',
 }
 
+ox_libs {
+  'locale',
+  -- 'math',
+  -- 'table',
+}

@@ -1,19 +1,17 @@
-Bag          = {
+Bag = {
     bags = {},
 }
-
-IsInCode     = false
-InputOpened  = false
-AlertOpened  = false
-local Config = require "Modules.Client.cl-config"
-local Cam    = require "Modules.Client.cl-cam"
-local Shared = require "Modules.Shared.shared"
-
+IsInCode = false
+InputOpened = false
+AlertOpened = false
+local Config = lib.load('Modules.Shared.client')
+local Cam = lib.load('Modules.Client.cl-cam')
+local bridge = lib.load('Modules.Client.bridge')
 
 function Bag:setup()
-    self.animDict = "pickup_object"
-    self.animName = "pickup_low"
-    self.dictChangeClothes = "anim_heist@hs3f@ig12_change_clothes@"
+    self.animDict = 'pickup_object'
+    self.animName = 'pickup_low'
+    self.dictChangeClothes = 'anim_heist@hs3f@ig12_change_clothes@'
     self.animChangeCLothes = 'action_01_male'
 end
 
@@ -29,68 +27,54 @@ end
 
 function Bag:animAndCam(enable)
     enable = enable or true
-    local dict = lib.requestAnimDict("amb@world_human_bum_wash@male@low@idle_a")
-    local name = "idle_a"
+    local dict = lib.requestAnimDict('amb@world_human_bum_wash@male@low@idle_a')
+    local name = 'idle_a'
     local ped = cache.ped
-
     if enable then
-        if not Cam.GetCam() then
-            Cam.CamPed()
-        end
+        if not Cam.GetCam() then Cam.CamPed() end
     end
-
     TaskPlayAnim(ped, dict, name, 1.0, 1.0, -1, 1, 0.5, false, false, false)
 end
 
 function Bag:animAndCamClear(stopCam)
-    local dict = lib.requestAnimDict("amb@world_human_bum_wash@male@low@idle_a")
+    local dict = lib.requestAnimDict('amb@world_human_bum_wash@male@low@idle_a')
     RemoveAnimDict(dict)
     ClearPedTasks(cache.ped)
     if stopCam then
-        if Cam.GetCam() then
-            Cam.DestroyCam()
-        end
+        if Cam.GetCam() then Cam.DestroyCam() end
     end
 end
 
 function Bag:andleCodeInput(idDui)
     IsInCode = true
-
-    local input = lib.inputDialog("Add Outfit By Code", {
-        { type = 'input', label = 'Add Outfit by Code', description = 'Enter a code to generate or copy the outfit', required = true, min = 4, max = 16 },
+    local input = lib.inputDialog(locale('menu.add_outfit_code_title'), {
+        { type = 'input', label = locale('menu.add_outfit_code_label'), description = locale('menu.add_outfit_code_desc'), required = true, min = 4, max = 16 },
     })
-
     if not input then
         lib.showContext(('bag_menu_%s'):format(idDui))
         IsInCode = false
         return
     end
-
     local codeName = input[1]
-
-    local success = lib.callback.await("LGF_OutfitBagOx.addOutfitByCode", 200, {
+    local success = lib.callback.await('LGF_OutfitBagOx.addOutfitByCode', 200, {
         codeName = codeName,
         bagIDToAdd = idDui,
     })
+    if not success then return end
     IsInCode = false
     lib.showContext(('bag_menu_%s'):format(idDui))
 end
 
 function Bag:PlaceBag(propName, maxSlot, itemName, bagID)
     Bag:setup()
-
     lib.requestAnimDict(self.animDict)
     lib.requestModel(propName)
     local coords = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 0.5, 0.0)
-
     TaskPlayAnim(cache.ped, self.animDict, self.animName, 8.0, 8.0, 1000, 50, 0, false, false, false)
-
     SetTimeout(900, function()
         local entity = CreateObjectNoOffset(propName, coords.x, coords.y, coords.z, true, false)
         PlaceObjectOnGroundProperly(entity)
-
         bagID = bagID or NetworkGetNetworkIdFromEntity(entity)
-
         local data = {
             coords = coords,
             bagData = {},
@@ -103,14 +87,12 @@ function Bag:PlaceBag(propName, maxSlot, itemName, bagID)
             savedOutfits = {},
             itemName = itemName,
         }
-
         Bag.bags[bagID] = data
-
-        lib.callback.await("LGF_OutfitBagOx.syncInteraction", false, data)
+        lib.callback.await('LGF_OutfitBagOx.syncInteraction', false, data)
     end)
 end
 
-RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
+RegisterNetEvent('LGF_OutfitBagOx.syncInteraction', function(data)
     local point = lib.points.new({
         coords = data.coords,
         distance = 5,
@@ -119,15 +101,14 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
     local ItemName = data.itemName
     if not Bag.bags[data.bagID] then Bag.bags[data.bagID] = {} end
     Bag.bags[data.bagID].point = point
-
     local function interactMenu(idDui)
         Bag:animAndCam()
-        local savedOutfits = lib.callback.await("LGF_OutfitBagOx.getOutfitFromId", false, idDui)
+        local savedOutfits = lib.callback.await('LGF_OutfitBagOx.getOutfitFromId', false, idDui)
         AvailableSlots = maxSlot - #savedOutfits
         local options = {
             {
-                title = 'Add Outfit by Code',
-                description = 'Enter a code to generate or copy the outfit',
+                title = locale('menu.add_outfit_code_title'),
+                description = locale('menu.add_outfit_code_desc'),
                 icon = 'key',
                 disabled = (type(savedOutfits) == 'table' and #savedOutfits >= maxSlot) or false,
                 onSelect = function()
@@ -135,16 +116,16 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
                 end
             },
             {
-                title = 'Save Current Outfit',
-                description = ('Save your current outfit with a custom name.'),
+                title = locale('menu.save_outfit_title'),
+                description = locale('menu.save_outfit_desc'),
                 icon = 'save',
                 disabled = (type(savedOutfits) == 'table' and #savedOutfits >= maxSlot) or false,
                 onSelect = function()
-                    local Skin = Config.GetSkin(cache.ped)
+                    local Skin = bridge.GetSkin(cache.ped)
                     lib.hideContext()
                     InputOpened = true
-                    local input = lib.inputDialog(('OutfitBag %s'):format(idDui), {
-                        { type = 'input', label = 'Outfit Name', description = 'Save Outfit Name for Current Bag', required = true, min = 4, max = 16 },
+                    local input = lib.inputDialog(locale('menu.outfitbag_title', idDui), {
+                        { type = 'input', label = locale('menu.outfit_name_label'), description = locale('menu.outfit_name_desc'), required = true, min = 4, max = 16 },
                     })
                     if not input then
                         lib.showContext(('bag_menu_%s'):format(idDui))
@@ -152,62 +133,57 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
                         return
                     end
                     local OutfitName = input[1]
-                    if GetResourceState("LEGACYCORE"):find("start") then
-                        local LGF = exports.LEGACYCORE:GetCoreData()
-                        local Slot = LGF.DATA:GetSlotCharacter()
-                        lib.callback.await("LGF_OutfitBagOx.saveCurrentOutfit", false, Skin, idDui, OutfitName, Slot)
-                    else
-                        lib.callback.await("LGF_OutfitBagOx.saveCurrentOutfit", false, Skin, idDui, OutfitName)
-                    end
+                    local Slot = bridge.GetCharSlot()
+                    lib.callback.await('LGF_OutfitBagOx.saveCurrentOutfit', false, Skin, idDui, OutfitName, Slot)
                     lib.hideContext()
                     Bag:animAndCamClear(true)
                     InputOpened = false
                 end
             },
             {
-                title = 'Load Saved Outfit',
-                description = 'Choose an outfit to load or delete',
+                title = locale('menu.load_outfit_title'),
+                description = locale('menu.load_outfit_desc'),
                 icon = 'folder-open',
                 onSelect = function()
                     local outfitOptions = {}
-                    local forceOutf = lib.callback.await("LGF_OutfitBagOx.getOutfitFromId", false, idDui)
+                    local forceOutf = lib.callback.await('LGF_OutfitBagOx.getOutfitFromId', false, idDui)
                     for _, outfit in ipairs(forceOutf) do
                         outfitOptions[#outfitOptions + 1] = {
                             title = outfit.outfit_name,
                             icon = 'tshirt',
-                            description = ("Outfit Code: %s"):format(outfit.outfit_code),
+                            description = locale('menu.outfit_code_desc', outfit.outfit_code),
                             onSelect = function()
                                 local actionOptions = {
                                     {
-                                        title = 'Load Outfit',
-                                        description = 'Load the selected outfit',
+                                        title = locale('menu.load_outfit_action'),
+                                        description = locale('menu.load_outfit_action_desc'),
                                         icon = 'arrow-right',
                                         onSelect = function()
                                             lib.showContext(('outfit_action_menu_%s'):format(idDui))
                                             Bag:animChangeClothes(1000)
                                             Wait(2000)
-                                            Config.SetSkin(cache.ped, outfit.outfit_data)
+                                            bridge.SetSkin(cache.ped, outfit.outfit_data)
                                             Bag:animAndCam(false)
                                         end
                                     },
                                     {
-                                        title = 'Delete Outfit',
-                                        description = 'Delete the selected outfit from the bag',
+                                        title = locale('menu.delete_outfit_action'),
+                                        description = locale('menu.delete_outfit_action_desc'),
                                         icon = 'trash',
                                         onSelect = function()
                                             AlertOpened = true
                                             local alert = lib.alertDialog({
-                                                header = ('Confirm Deletion %s'):format(outfit.outfit_code),
-                                                content = 'Are you sure you want to delete this outfit?',
+                                                header = locale('menu.confirm_deletion_header', outfit.outfit_code),
+                                                content = locale('menu.confirm_deletion_content'),
                                                 centered = true,
                                                 cancel = true,
                                                 labels = {
-                                                    confirm = "Delete",
-                                                    cancel = "Cancel",
+                                                    confirm = locale('menu.confirm_deletion_confirm'),
+                                                    cancel = locale('menu.confirm_deletion_cancel'),
                                                 },
                                             })
-                                            if alert == "confirm" then
-                                                lib.callback.await("LGF_OutfitBagOx.deleteOutfit", false, {bagID = idDui, outfit_code = outfit.outfit_code})
+                                            if alert == 'confirm' then
+                                                lib.callback.await('LGF_OutfitBagOx.deleteOutfit', false, {bagID = idDui, outfit_code = outfit.outfit_code})
                                                 lib.hideContext()
                                                 Bag:animAndCamClear(true)
                                             else
@@ -219,7 +195,7 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
                                 }
                                 lib.registerContext({
                                     id = ('outfit_action_menu_%s'):format(idDui),
-                                    title = ('Outfit Actions %s/%s'):format(AvailableSlots, maxSlot),
+                                    title = locale('menu.outfit_actions_title', AvailableSlots, maxSlot),
                                     menu = ('saved_outfits_menu_%s'):format(idDui),
                                     canClose = true,
                                     options = actionOptions,
@@ -230,7 +206,7 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
                     end
                     lib.registerContext({
                         id = ('saved_outfits_menu_%s'):format(idDui),
-                        title = 'Saved Outfits',
+                        title = locale('menu.saved_outfits_title'),
                         menu = ('bag_menu_%s'):format(idDui),
                         canClose = false,
                         options = outfitOptions,
@@ -239,18 +215,18 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
                 end
             },
             {
-                title = 'Take Out Bag',
-                description = 'Remove the bag from the world',
+                title = locale('menu.take_bag_title'),
+                description = locale('menu.take_bag_desc'),
                 icon = 'trash',
                 onSelect = function()
-                    lib.callback.await("LGF_OutfitBagOx.SyncRemoveBag", false, {bagID = idDui, ItemName = ItemName})
+                    lib.callback.await('LGF_OutfitBagOx.SyncRemoveBag', false, {bagID = idDui, ItemName = ItemName})
                     Bag:animAndCamClear(true)
                 end
             }
         }
         lib.registerContext({
             id = ('bag_menu_%s'):format(idDui),
-            title = 'Bag Menu',
+            title = locale('menu.bag_menu_title'),
             options = options,
             onExit = function()
                 Bag:animAndCamClear(true)
@@ -262,13 +238,13 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
         if Config.interact == 'ox_target' then
             exports.ox_target:addLocalEntity(data.entity, {
                 {
-                    label = ('Open Bag %s'):format(data.bagID),
+                    label = locale('interact.open_bag', data.bagID),
                     name = ('lgf_bag_%s'):format(data.bagID),
                     icon = 'fa-solid fa-suitcase',
                     distance = 1.5,
                     idBag = data.bagID,
                     canInteract = function(entity, distance, coords, name, bone)
-                        return not Config.DeatCheck(cache.ped)
+                        return not bridge.DeatCheck(cache.ped)
                     end,
                     onSelect = function(data)
                         interactMenu(data.idBag)
@@ -278,16 +254,16 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
         elseif Config.interact == 'LGF_SpriteTextUI' then
             data.duiHandlers[data.bagID] = exports.LGF_SpriteTextUI:HandleHoldTextUI(data.bagID, {
                 Visible = true,
-                Message = ('Hold to Open Bag %s'):format(data.bagID),
-                Bind = "E",
-                CircleColor = "teal",
+                Message = locale('interact.hold_to_open_bag', data.bagID),
+                Bind = 'E',
+                CircleColor = 'teal',
                 UseOnlyBind = false,
                 BindToHold = 38,
                 TimeToHold = 0.5,
                 DistanceHold = 2,
                 Coords = self.coords,
                 canInteract = function(id, distance)
-                    return not Config.DeatCheck(cache.ped)
+                    return not bridge.DeatCheck(cache.ped)
                 end,
                 onCallback = function(idDui)
                     interactMenu(idDui)
@@ -319,8 +295,6 @@ RegisterNetEvent("LGF_OutfitBagOx.syncInteraction", function(data)
     end
 end)
 
-
-
 function Bag:removeBag(bagID)
     local bagData = Bag.bags[bagID]
     if bagData then
@@ -337,7 +311,7 @@ function Bag:removeBag(bagID)
         end
         Bag.bags[bagID] = nil
     else
-        print(("Failed to remove bag with ID %s"):format(bagID))
+        print(locale('interact.failed_remove_bag', bagID))
     end
 end
 
@@ -349,7 +323,7 @@ AddEventHandler('onResourceStop', function(resourceName)
     end
 end)
 
-RegisterNetEvent("LGF_OutfitBagOx.SyncRemoveBag", function(bagID)
+RegisterNetEvent('LGF_OutfitBagOx.SyncRemoveBag', function(bagID)
     Bag:removeBag(bagID)
 end)
 
@@ -359,7 +333,6 @@ exports('placeBag', function(data, slot)
         if bagConfig.itemName == itemName then
             local propName = bagConfig.propName
             local maxSlot = bagConfig.maxSlot
-
             exports.ox_inventory:useItem(data, function(itemData)
                 if itemData then
                     local BagID = itemData.metadata and itemData.metadata.bagID or nil
@@ -374,16 +347,14 @@ end)
 
 local isLoaded = false
 
-
 local function addLoadedInteraction()
     if isLoaded then return end
-    local success = lib.callback.await("LGF_OutfitBagOx.triggerAllInteractions", false)
+    local success = lib.callback.await('LGF_OutfitBagOx.triggerAllInteractions', false)
     if success then
         Wait(2000)
         isLoaded = true
     end
 end
-
 
 CreateThread(function()
     while true do
