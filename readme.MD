@@ -13,7 +13,7 @@ OutfitBag using "LGF_SpriteTextUI" for the interaction, Allow player to share pe
 
 ## Requirement
 - ox_inventory
-- LGF_SpriteTextUI
+- LGF_SpriteTextUI or ox_target
 - oxmysql
 
 ## Features
